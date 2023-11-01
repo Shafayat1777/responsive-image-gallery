@@ -1,9 +1,10 @@
-import { useEffect, useState, useRef } from "react";
+import { useState, useRef } from "react";
 
 function App() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [file, setFile] = useState([]); // used to store image files
-
+  const [hover, setHover] = useState(null); // used for having specific hovering effect
+  const [selected, setSelected] = useState([]); // used for storing the selected image for deletion
   const DraggedItem = useRef(null);
   const PlacePoint = useRef(null);
 
@@ -43,54 +44,129 @@ function App() {
     setFile(images);
   };
 
-  useEffect(() => {
-    if (file.length > 0) console.log(file);
-  }, [file]);
+  // select function for deletion
+  const onSelect = (index) => {
+    if (selected.includes(index)) {
+      const items = selected;
+      items.splice(selected.indexOf(index), 1);
+      setSelected(items);
+    } else setSelected((prevSelected) => [...prevSelected, index]);
+  };
+
+  // delete function
+  const HandleDelete = () => {
+    const images = [...file];
+    selected.forEach((item) => {
+      var img = file[item];
+      img = images.indexOf(img);
+      images.splice(img, 1);
+    });
+    setFile(images);
+    setSelected([]);
+  };
 
   return (
     <div className="main-container flex justify-center w-full h-screen p-10 bg-slate-100">
       <div className="image-container border rounded-md bg-white w-fit h-fit">
         <div className="image-container-head py-5 px-10 border-b flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-600">Gallery</h1>
-          <h1 className="text-red-500 font-semibold cursor-pointer">
-            Delete file
+          <h1 className="text-xl font-bold text-gray-600">
+            {selected.length > 0 ? (
+              <div className="flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className={`w-5 h-5 mr-5 text-white bg-blue-600  ${
+                    selected.length > 0 ? "" : "hidden"
+                  }`}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4.5 12.75l6 6 9-13.5"
+                  />
+                </svg>
+                {selected.length + " Files selected"}
+              </div>
+            ) : (
+              "Gallery"
+            )}
           </h1>
+          {selected.length > 0 && (
+            <h1
+              onClick={HandleDelete}
+              className="text-red-500 font-semibold cursor-pointer border border-white hover:border-red-500 rounded-md px-2"
+            >
+              Delete files
+            </h1>
+          )}
         </div>
 
-        <div className="image-container-content p-7 grid grid-cols-5 gap-8 ">
-          {/* <div className=" border-2 rounded-md w-96 h-96 col-span-2 row-span-2"></div> */}
+        <div className="image-container-content p-7 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8 ">
+          {/* Draggable divs */}
           {file.length > 0 &&
             file.map((file, index) => (
               <div
+                onMouseEnter={() => {
+                  setHover(index);
+                }}
+                onMouseLeave={() => {
+                  setHover(null);
+                }}
                 draggable
-                onDragStart={(e) => (DraggedItem.current = index)}
-                onDragEnter={(e) => (PlacePoint.current = index)}
-                onDragEnd={HandleSortImage}
-                onDragOver={(e) => e.preventDefault}
+                onDragStart={(e) => (DraggedItem.current = index)} // for drag event
+                onDragEnter={(e) => (PlacePoint.current = index)} // for drag event
+                onDragEnd={HandleSortImage} // for drag event
+                onDragOver={(e) => e.preventDefault} // for drag event
                 key={index}
                 className={`border-2 rounded-md ${
-                  index === 0 ? "w-96 h-96 col-span-2 row-span-2" : "w-44 h-44"
-                } relative overflow-hidden cursor-grab`}
+                  index === 0 ? "w-full xs:w-96 xs:h-96 col-span-2 row-span-2" : "w-full xs:w-44 xs:h-44"
+                } relative overflow-hidden cursor-move`}
               >
-                <div className="bg-white w-5 h-5 rounded-sm absolute top-5 left-5 cursor-pointer z-40">
-                  {index}
+                <div
+                  onClick={() => onSelect(index)}
+                  className={`${
+                    hover === index ? "bg-white" : ""
+                  } w-6 h-6 rounded-md absolute top-5 left-5 cursor-pointer z-40 flex items-center justify-center overflow-hidden transition-all ease-out duration-300`}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className={` w-6 h-6 text-white bg-blue-600  ${
+                      selected.includes(index) ? "" : "hidden"
+                    }`}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4.5 12.75l6 6 9-13.5"
+                    />
+                  </svg>
                 </div>
                 <div
-                  className={` overflow-hidden ${
+                  className={` transition-all ease-out duration-300 overflow-hidden ${
+                    hover === index ? "bg-black opacity-40" : ""
+                  }  ${
                     index === 0
-                      ? "w-96 h-96 col-span-2 row-span-2"
-                      : "w-44 h-44"
-                  } absolute border-2 rounded-md top-[-2px] left-[-2px]`}
+                      ? "w-full xs:w-96 xs:h-96 col-span-2 row-span-2"
+                      : "w-full xs:w-44 xs:h-44"
+                  } absolute border-2 rounded-md top-[-4px]  xs:top-[-2px] xs:left-[-2px]`}
                 ></div>
                 <img src={URL.createObjectURL(file)} alt="" />
               </div>
             ))}
 
+          {/* Add image button */}
           <div
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            className={`add-button border-2 rounded-md border-dashed w-44 h-44 flex flex-col justify-center items-center bg-slate-50 cursor-pointer ${
+            className={`add-button border-2 rounded-md border-dashed w-full  xs:w-44 h-44 flex flex-col justify-center items-center bg-slate-50 cursor-pointer ${
               isDragOver ? "border-blue-300 bg-blue-50" : "border-gray-400"
             } rounded-md`}
           >
