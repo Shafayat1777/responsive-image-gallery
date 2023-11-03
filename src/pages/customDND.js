@@ -1,12 +1,14 @@
 import { useState, useRef } from "react";
 
 const CustomDND = () => {
-    const [isDragOver, setIsDragOver] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false); // used for file dragging
+  const [isDragOver2, setIsDragOver2] = useState(null); // used for image dragging
   const [file, setFile] = useState([]); // used to store image files
   const [hover, setHover] = useState(null); // used for having specific hovering effect
+
   const [selected, setSelected] = useState([]); // used for storing the selected image for deletion
-  const DraggedItem = useRef(null);
-  const PlacePoint = useRef(null);
+  const DraggedItem = useRef(null); // used to indicate the item being dragged
+  const PlacePoint = useRef(null); // used to indicate the item to be replaced
 
   // file drag & drop functions
   // Function to handle drag over event
@@ -28,26 +30,29 @@ const CustomDND = () => {
 
   // sorting function
   const HandleSortImage = () => {
-    let images = [...file];
+    if (PlacePoint.current != null) {
+      let images = [...file];
 
-    // get the draged item and remove from its current position
-    const replacedImage = images.splice(DraggedItem.current, 1)[0];
+      // get the draged item and remove from its current position
+      const replacedImage = images.splice(DraggedItem.current, 1)[0];
 
-    // switch the position if the draged item with the new positon
-    images.splice(PlacePoint.current, 0, replacedImage);
+      // switch the position if the draged item with the new positon
+      images.splice(PlacePoint.current, 0, replacedImage);
 
-    // reset the positions
-    DraggedItem.current = null;
-    PlacePoint.current = null;
+      // reset the positions
+      DraggedItem.current = null;
+      PlacePoint.current = null;
 
-    // update the file array
-    setFile(images);
+      // update the file array
+      setFile(images);
+      setIsDragOver2(null);
+    }
   };
 
   // select function for deletion
   const onSelect = (index) => {
     if (selected.includes(index)) {
-      const items = selected;
+      const items = [...selected];
       items.splice(selected.indexOf(index), 1);
       setSelected(items);
     } else setSelected((prevSelected) => [...prevSelected, index]);
@@ -65,9 +70,10 @@ const CustomDND = () => {
     setSelected([]);
   };
 
-    return ( 
-        <div className="main-container flex justify-center w-full h-screen p-10 bg-slate-100">
+  return (
+    <div className="main-container flex justify-center w-full h-screen p-10 bg-slate-100">
       <div className="image-container border rounded-md bg-white w-fit h-fit">
+        {/* Header of the content */}
         <div className="image-container-head py-5 px-10 border-b flex items-center justify-between">
           <h1 className="text-xl font-bold text-gray-600">
             {selected.length > 0 ? (
@@ -97,7 +103,7 @@ const CustomDND = () => {
           {selected.length > 0 && (
             <h1
               onClick={HandleDelete}
-              className="text-red-500 font-semibold cursor-pointer border border-white hover:border-red-500 rounded-md px-2"
+              className="text-red-500 font-semibold cursor-pointer border border-white hover:border-red-500 rounded-md px-2 "
             >
               Delete files
             </h1>
@@ -109,55 +115,70 @@ const CustomDND = () => {
           {file.length > 0 &&
             file.map((file, index) => (
               <div
-                onMouseEnter={() => {
-                  setHover(index);
-                }}
-                onMouseLeave={() => {
-                  setHover(null);
-                }}
-                draggable
-                onDragStart={(e) => (DraggedItem.current = index)} // for drag event
-                onDragEnter={(e) => (PlacePoint.current = index)} // for drag event
-                onDragEnd={HandleSortImage} // for drag event
-                onDragOver={(e) => e.preventDefault} // for drag event
-                key={index}
                 className={`border-2 rounded-md ${
-                  index === 0 ? "w-full xs:w-96 xs:h-96 col-span-2 row-span-2" : "w-full xs:w-44 xs:h-44"
-                } relative overflow-hidden cursor-move`}
+                  index === 0
+                    ? "w-full xs:w-96 xs:h-96 col-span-2 row-span-2"
+                    : "w-full xs:w-44 xs:h-44"
+                } relative overflow-hidden cursor-grab ${
+                  isDragOver2 === index ? "border-blue-300 border-dashed " : ""
+                }`}
               >
                 <div
-                  onClick={() => onSelect(index)}
-                  className={`${
-                    hover === index ? "bg-white" : ""
-                  } w-6 h-6 rounded-md absolute top-5 left-5 cursor-pointer z-40 flex items-center justify-center overflow-hidden transition-all ease-out duration-300`}
+                onClick={()=>setHover(null)}
+                  onMouseEnter={() => {
+                    // for mouse hover event
+                    setHover(index);
+                  }}
+                  onMouseLeave={() => {
+                    // for mouse hover event
+                    setHover(null);
+                  }}
+                  draggable
+                  onDragStart={(e) => {
+                    // for drag event
+                    DraggedItem.current = index;
+                  }}
+                  onDragEnter={(e) => {
+                    // for drag event
+                    PlacePoint.current = index;
+                    setIsDragOver2(index);
+                  }}
+                  onDragEnd={HandleSortImage} // for drag event
+                  onDragOver={(e) => e.preventDefault} // for drag event
+                  key={index}
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className={` w-6 h-6 text-white bg-blue-600  ${
-                      selected.includes(index) ? "" : "hidden"
-                    }`}
+                  <div
+                    onClick={() => onSelect(index)}
+                    className={`${
+                      hover === index ? "bg-white" : ""
+                    } w-6 h-6 rounded-md absolute top-5 left-5 cursor-pointer z-40 flex items-center justify-center overflow-hidden transition-all ease-out duration-300`}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M4.5 12.75l6 6 9-13.5"
-                    />
-                  </svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className={` w-6 h-6 text-white bg-blue-600  ${
+                        selected.includes(index) ? "" : "hidden"
+                      }`}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M4.5 12.75l6 6 9-13.5"
+                      />
+                    </svg>
+                  </div>
+                  <div
+                    className={` transition-all ease-out duration-300 overflow-hidden ${
+                      isDragOver2 === index ? "bg-white" : ""
+                    }  ${
+                      hover === index ? "bg-black opacity-40" : ""
+                    }  w-full h-full absolute rounded-md `}
+                  ></div>
+                  <img src={URL.createObjectURL(file)} alt="" />
                 </div>
-                <div
-                  className={` transition-all ease-out duration-300 overflow-hidden ${
-                    hover === index ? "bg-black opacity-40" : ""
-                  }  ${
-                    index === 0
-                      ? "w-full xs:w-96 xs:h-96 col-span-2 row-span-2"
-                      : "w-full xs:w-44 xs:h-44"
-                  } absolute border-2 rounded-md top-[-4px]  xs:top-[-2px] xs:left-[-2px]`}
-                ></div>
-                <img src={URL.createObjectURL(file)} alt="" />
               </div>
             ))}
 
@@ -203,7 +224,7 @@ const CustomDND = () => {
         </div>
       </div>
     </div>
-     );
-}
- 
+  );
+};
+
 export default CustomDND;
