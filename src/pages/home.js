@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 const Home = () => {
   return (
     <div className="flex items-center flex-col">
-      <p className="mt-10 w-96 text-lg">
+      <h1 className="mt-10 text-2xl font-semibold text-gray-600">Responsive Image gallery</h1>
+      <p className="mt-10 w-96 text-lg text-gray-600">
         This here is my own attempt of responsive image gallery using React JS and Tailwind CSS. 
         It has following features: 
         <ul className="list-disc px-6">

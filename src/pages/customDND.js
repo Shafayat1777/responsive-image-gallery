@@ -103,7 +103,7 @@ const CustomDND = () => {
           {selected.length > 0 && (
             <h1
               onClick={HandleDelete}
-              className="text-red-500 font-semibold cursor-pointer border border-white hover:border-red-500 rounded-md px-2 "
+              className="text-red-500 font-semibold cursor-pointer hover:underline  hover:underline-offset-2 rounded-md px-2 "
             >
               Delete files
             </h1>
